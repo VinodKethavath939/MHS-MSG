@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}School WhatsApp Notification System{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #27ae60;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --info-color: #3498db;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 250px;
+            height: 100vh;
+            background: linear-gradient(135deg, var(--primary-color) 0%, #34495e 100%);
+            padding: 30px 0;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .sidebar .brand {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 0 20px;
+        }
+
+        .sidebar .brand h3 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .sidebar .brand p {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .sidebar .nav-menu {
+            list-style: none;
+        }
+
+        .sidebar .nav-menu li {
+            margin: 0;
+        }
+
+        .sidebar .nav-menu a {
+            display: block;
+            padding: 15px 30px;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+
+        .sidebar .nav-menu a:hover,
+        .sidebar .nav-menu a.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-left-color: var(--secondary-color);
+        }
+
+        .sidebar .nav-menu i {
+            width: 20px;
+            margin-right: 15px;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            margin-left: 250px;
+            padding: 0;
+        }
+
+        /* Top Navbar */
+        .top-navbar {
+            background-color: white;
+            padding: 15px 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+
+        .top-navbar .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .top-navbar .user-info {
+            text-align: right;
+        }
+
+        .top-navbar .user-info p {
+            margin: 0;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .top-navbar .user-info strong {
+            display: block;
+            color: var(--primary-color);
+        }
+
+        /* Page Content */
+        .page-content {
+            padding: 30px;
+        }
+
+        .page-header {
+            margin-bottom: 30px;
+        }
+
+        .page-header h1 {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .page-header .breadcrumb {
+            background-color: transparent;
+            padding: 0;
+        }
+
+        /* Dashboard Cards */
+        .stats-card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            border-left: 5px solid var(--info-color);
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .stats-card.success {
+            border-left-color: var(--secondary-color);
+        }
+
+        .stats-card.danger {
+            border-left-color: var(--danger-color);
+        }
+
+        .stats-card.warning {
+            border-left-color: var(--warning-color);
+        }
+
+        .stats-card .card-icon {
+            font-size: 35px;
+            margin-bottom: 15px;
+        }
+
+        .stats-card .card-icon.success {
+            color: var(--secondary-color);
+        }
+
+        .stats-card .card-icon.danger {
+            color: var(--danger-color);
+        }
+
+        .stats-card .card-icon.warning {
+            color: var(--warning-color);
+        }
+
+        .stats-card .card-icon.info {
+            color: var(--info-color);
+        }
+
+        .stats-card h3 {
+            color: #666;
+            font-size: 14px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .stats-card .number {
+            font-size: 32px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        /* Forms */
+        .form-card {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .form-group label {
+            color: var(--primary-color);
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .form-control, .form-select {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px 15px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.2rem rgba(39, 174, 96, 0.25);
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            font-weight: 500;
+        }
+
+        .btn-primary:hover {
+            background-color: #229954;
+            border-color: #229954;
+        }
+
+        .btn-sm {
+            padding: 5px 12px;
+            font-size: 13px;
+        }
+
+        /* Tables */
+        .table-card {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table thead {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .table thead th {
+            color: var(--primary-color);
+            font-weight: 600;
+            padding: 15px;
+        }
+
+        .table tbody td {
+            padding: 15px;
+            vertical-align: middle;
+            border-bottom: 1px solid #eee;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        /* Alerts */
+        .alert {
+            border-radius: 5px;
+            border: none;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .alert-warning {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .alert-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+
+        /* Progress Bar */
+        .progress {
+            height: 25px;
+            border-radius: 5px;
+            background-color: #e9ecef;
+        }
+
+        .progress-bar {
+            background-color: var(--secondary-color);
+        }
+
+        /* Badge */
+        .badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        .badge-success {
+            background-color: var(--secondary-color);
+        }
+
+        .badge-danger {
+            background-color: var(--danger-color);
+        }
+
+        .badge-warning {
+            background-color: var(--warning-color);
+        }
+
+        .badge-info {
+            background-color: var(--info-color);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .sidebar .nav-menu {
+                display: flex;
+                flex-wrap: wrap;
+            }
+
+            .sidebar .nav-menu a {
+                flex: 1;
+                min-width: 150px;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                border-left: none;
+                padding: 10px 15px;
+            }
+
+            .stats-card {
+                margin-bottom: 15px;
+            }
+
+            .page-content {
+                padding: 15px;
+            }
+        }
+
+        /* File Upload Area */
+        .upload-area {
+            border: 2px dashed var(--secondary-color);
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            background-color: rgba(39, 174, 96, 0.05);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover {
+            background-color: rgba(39, 174, 96, 0.1);
+            border-color: #229954;
+        }
+
+        .upload-area i {
+            font-size: 48px;
+            color: var(--secondary-color);
+            margin-bottom: 20px;
+        }
+
+        .upload-area h5 {
+            color: var(--primary-color);
+        }
+
+        .upload-area p {
+            color: #666;
+            margin: 0;
+        }
+
+        /* Modal */
+        .modal-header {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+        }
+
+        .modal-header .btn-close {
+            filter: brightness(0) invert(1);
+        }
+
+        /* Pagination */
+        .pagination .page-link {
+            color: var(--secondary-color);
+            border-color: #ddd;
+        }
+
+        .pagination .page-link:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            color: white;
+        }
+
+        .pagination .page-item.active .page-link {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% if user.is_authenticated %}
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+        <div class="brand">
+            <h3><i class="fas fa-school"></i> School</h3>
+            <p>WhatsApp Notifications</p>
+        </div>
+        
+        <ul class="nav-menu">
+            <li><a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                <i class="fas fa-chart-line"></i> Dashboard
+            </a></li>
+            <li><a href="{% url 'messages_list' %}" class="{% if 'messages' in request.path %}active{% endif %}">
+                <i class="fas fa-envelope"></i> Messages
+            </a></li>
+            <li><a href="{% url 'send_direct_message' %}" class="{% if request.resolver_match.url_name == 'send_direct_message' %}active{% endif %}">
+                <i class="fas fa-paper-plane"></i> Direct Send
+            </a></li>
+            <li><a href="{% url 'contacts_list' %}" class="{% if 'contacts' in request.path %}active{% endif %}">
+                <i class="fas fa-users"></i> Contacts
+            </a></li>
+            <li><a href="{% url 'templates_list' %}" class="{% if 'templates' in request.path %}active{% endif %}">
+                <i class="fas fa-file-alt"></i> Templates
+            </a></li>
+            <li><a href="{% url 'logout' %}">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a></li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Navbar -->
+        <div class="top-navbar">
+            <div></div>
+            <div class="user-menu">
+                <div class="user-info">
+                    <strong>{{ user.first_name|default:user.username }}</strong>
+                    <p>Administrator</p>
+                </div>
+                <div style="width: 40px; height: 40px; background: var(--secondary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
+                    <i class="fas fa-user"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page Content -->
+        <div class="page-content">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+    {% else %}
+    <!-- Login Page (Non-authenticated) -->
+    <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+        {% block login_content %}{% endblock %}
+    </div>
+    {% endif %}
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Set active nav based on current page
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.nav-menu a').forEach(link => {
+                if (link.getAttribute('href') === currentPath) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

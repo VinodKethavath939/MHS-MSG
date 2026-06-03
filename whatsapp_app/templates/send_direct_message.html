@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            
+            {% if success %}
+            <div class="alert alert-dismissible fade show" role="alert" 
+                 style="border-left: 4px solid {% if send_success %}#28a745{% else %}#ffc107{% endif %}; 
+                        background-color: {% if send_success %}#d4edda{% else %}#fff3cd{% endif %};">
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                
+                {% if send_success %}
+                <h4 class="alert-heading">✓ All Messages Sent!</h4>
+                <p class="mb-0">Successfully sent <strong>{{ sent_count }}</strong> out of <strong>{{ phone_count }}</strong> messages</p>
+                {% else %}
+                <h4 class="alert-heading">⚠️ Partial Send</h4>
+                <p class="mb-2"><strong>Sent:</strong> {{ sent_count }} / {{ phone_count }}</p>
+                <p class="mb-0"><strong>Failed:</strong> {{ failed_count }}</p>
+                <small class="text-muted d-block mt-2">You may need to scan the QR code in the browser to authenticate WhatsApp Web.</small>
+                {% endif %}
+                
+                <div class="mt-3">
+                    <a href="{% url 'message_detail' message.id %}" class="btn btn-sm btn-primary">View Details</a>
+                    <a href="{% url 'dashboard' %}" class="btn btn-sm btn-outline-secondary">Dashboard</a>
+                    <a href="{% url 'send_direct_message' %}" class="btn btn-sm btn-outline-primary">Send Another</a>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if error %}
+            <div class="alert alert-danger alert-dismissible fade show">
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                <strong>Error:</strong> {{ error }}
+            </div>
+            {% endif %}
+
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white py-3">
+                    <h5 class="mb-1"><i class="fas fa-paper-plane"></i> Send Direct Message</h5>
+                    <small>Send to single number, multiple numbers, or upload a file</small>
+                </div>
+
+                <div class="card-body p-4">
+                    <form method="POST" enctype="multipart/form-data" id="directMessageForm">
+                        {% csrf_token %}
+
+                        <!-- Message Section -->
+                        <fieldset class="mb-4 pb-4 border-bottom">
+                            <legend class="h6 text-primary mb-3">📝 Message Content</legend>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Message Title *</label>
+                                <input type="text" name="title" class="form-control" 
+                                       placeholder="e.g. Important Announcement" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Message (English) *</label>
+                                <textarea name="message_en" class="form-control" rows="4"
+                                          placeholder="Type your message..." required></textarea>
+                                <small class="text-muted">Max 4096 characters</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Message (Telugu) <span class="text-muted">(Optional)</span></label>
+                                <textarea name="message_te" class="form-control" rows="4"
+                                          placeholder="Type message in Telugu..."></textarea>
+                                <small class="text-muted">Max 4096 characters</small>
+                            </div>
+                        </fieldset>
+
+                        <!-- Sending Mode Section -->
+                        <fieldset class="mb-4">
+                            <legend class="h6 text-primary mb-3">📱 Send To...</legend>
+                            
+                            <!-- Single Number -->
+                            <div class="mb-4 p-3 border rounded bg-light">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input sending-mode" type="radio" 
+                                           name="sending_mode" id="single" value="single" checked>
+                                    <label class="form-check-label fw-bold" for="single">
+                                        Single Number
+                                    </label>
+                                </div>
+                                <div id="single_section" class="ms-4 mt-2">
+                                    <input type="text" name="phone_number" id="phone_number" 
+                                           class="form-control" placeholder="919876543210"
+                                           title="Enter 10-digit number with country code">
+                                    <small class="text-muted d-block mt-1">
+                                        <i class="fas fa-info-circle"></i> Example: 919876543210
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- Multiple Numbers -->
+                            <div class="mb-4 p-3 border rounded bg-light">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input sending-mode" type="radio" 
+                                           name="sending_mode" id="multiple" value="multiple">
+                                    <label class="form-check-label fw-bold" for="multiple">
+                                        Multiple Numbers
+                                    </label>
+                                </div>
+                                <div id="multiple_section" class="ms-4 mt-2" style="display:none;">
+                                    <textarea name="phone_numbers" id="phone_numbers" 
+                                              class="form-control" rows="5"
+                                              placeholder="919876543210&#10;919876543211&#10;919876543212"></textarea>
+                                    <small class="text-muted d-block mt-1">
+                                        <i class="fas fa-info-circle"></i> Enter one number per line or separate with commas
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- File Upload -->
+                            <div class="mb-4 p-3 border rounded bg-light">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input sending-mode" type="radio" 
+                                           name="sending_mode" id="file" value="file">
+                                    <label class="form-check-label fw-bold" for="file">
+                                        Upload File
+                                    </label>
+                                </div>
+                                <div id="file_section" class="ms-4 mt-2" style="display:none;">
+                                    <input type="file" name="phone_file" id="phone_file" 
+                                           class="form-control" accept=".xlsx,.xls,.csv">
+                                    <small class="text-muted d-block mt-1">
+                                        <i class="fas fa-info-circle"></i> Upload Excel or CSV file with phone numbers in first column
+                                    </small>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                <p class="mb-0">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Submit Buttons -->
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-send"></i> Send Message
+                            </button>
+                            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Help Section -->
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h6 class="card-title"><i class="fas fa-lightbulb text-warning"></i> Tips</h6>
+                            <ul class="list-unstyled small">
+                                <li>✓ Use country code (+91 for India)</li>
+                                <li>✓ Messages sent immediately</li>
+                                <li>✓ Max 4096 characters</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h6 class="card-title"><i class="fas fa-file-csv text-success"></i> File Format</h6>
+                            <div class="text-start small">
+                                <strong>CSV Header:</strong>
+                                <code class="d-block bg-light p-2 rounded">Phone<br>919876543210<br>919876543211</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const radioButtons = document.querySelectorAll('.sending-mode');
+    
+    radioButtons.forEach(radio => {
+        radio.addEventListener('change', function() {
+            // Hide all sections
+            document.getElementById('single_section').style.display = 'none';
+            document.getElementById('multiple_section').style.display = 'none';
+            document.getElementById('file_section').style.display = 'none';
+            
+            // Show selected section
+            if (this.value === 'single') {
+                document.getElementById('single_section').style.display = 'block';
+            } else if (this.value === 'multiple') {
+                document.getElementById('multiple_section').style.display = 'block';
+            } else if (this.value === 'file') {
+                document.getElementById('file_section').style.display = 'block';
+            }
+        });
+    });
+});
+</script>
+
+{% endblock %}
+

@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+
+{% block title %}Messages - School WhatsApp Notifications{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-envelope"></i> Messages</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+            <li class="breadcrumb-item active">Messages</li>
+        </ol>
+    </nav>
+</div>
+
+<!-- Action Buttons -->
+<div style="margin-bottom: 20px;">
+    <a href="{% url 'create_message' %}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Send New Message
+    </a>
+</div>
+
+<!-- Messages List -->
+<div class="table-card">
+    {% if messages %}
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Status</th>
+                    <th>Contacts</th>
+                    <th>Progress</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for message in messages %}
+                <tr>
+                    <td>
+                        <strong>{{ message.title }}</strong>
+                        <br>
+                        <small class="text-muted">by {{ message.created_by.first_name|default:message.created_by.username }}</small>
+                    </td>
+                    <td>
+                        {% if message.status == 'completed' %}
+                            <span class="badge badge-success"><i class="fas fa-check-circle"></i> Completed</span>
+                        {% elif message.status == 'sending' %}
+                            <span class="badge badge-warning"><i class="fas fa-spinner"></i> Sending</span>
+                        {% elif message.status == 'failed' %}
+                            <span class="badge badge-danger"><i class="fas fa-times-circle"></i> Failed</span>
+                        {% elif message.status == 'scheduled' %}
+                            <span class="badge badge-info"><i class="fas fa-calendar"></i> Scheduled</span>
+                        {% else %}
+                            <span class="badge" style="background-color: #95a5a6;"><i class="fas fa-file"></i> Draft</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge badge-info">{{ message.total_contacts }}</span>
+                    </td>
+                    <td>
+                        {% if message.total_contacts > 0 %}
+                            {% widthratio message.sent_count message.total_contacts 100 as progress %}
+                            <div style="width: 150px;">
+                                <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar" role="progressbar" style="width: {{ progress }}%;" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100">{{ progress }}%</div>
+                                </div>
+                                <small class="text-muted">{{ message.sent_count }}/{{ message.total_contacts }}</small>
+                            </div>
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <small class="text-muted">{{ message.created_at|date:'d M Y' }}</small>
+                    </td>
+                    <td>
+                        <a href="{% url 'message_detail' message.id %}" class="btn btn-sm btn-info" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        {% if message.status == 'draft' %}
+                        <a href="{% url 'send_message' message.id %}" class="btn btn-sm btn-success" title="Send">
+                            <i class="fas fa-paper-plane"></i>
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'export_report' message.id %}" class="btn btn-sm btn-warning" title="Export Report">
+                            <i class="fas fa-download"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if messages.has_other_pages %}
+    <nav aria-label="Page navigation" style="padding: 20px; text-align: center;">
+        <ul class="pagination justify-content-center">
+            {% if messages.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1">First</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ messages.previous_page_number }}">Previous</a>
+                </li>
+            {% endif %}
+
+            {% for num in messages.paginator.page_range %}
+                {% if messages.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if messages.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ messages.next_page_number }}">Next</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ messages.paginator.num_pages }}">Last</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+    {% else %}
+    <div style="padding: 40px; text-align: center;">
+        <i class="fas fa-inbox" style="font-size: 48px; color: #bdc3c7; margin-bottom: 20px; display: block;"></i>
+        <p style="color: #7f8c8d; margin-bottom: 20px;">No messages yet.</p>
+        <a href="{% url 'create_message' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Create Your First Message
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

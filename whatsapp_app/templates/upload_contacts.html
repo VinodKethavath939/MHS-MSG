@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+
+{% block title %}Upload Contacts - School WhatsApp Notifications{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-upload"></i> Upload Contacts</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'contacts_list' %}">Contacts</a></li>
+            <li class="breadcrumb-item active">Upload</li>
+        </ol>
+    </nav>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="form-card">
+            {% if success %}
+            <div class="alert alert-success" role="alert">
+                <i class="fas fa-check-circle"></i> <strong>Success!</strong><br>
+                {{ message }}
+            </div>
+
+            <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
+                <h5>Import Statistics:</h5>
+                <ul style="margin-bottom: 0;">
+                    <li><strong>Imported:</strong> {{ stats.imported }}</li>
+                    <li><strong>Updated:</strong> {{ stats.updated }}</li>
+                    <li><strong>Skipped:</strong> {{ stats.skipped }}</li>
+                    <li><strong>Total Processed:</strong> {{ stats.total }}</li>
+                </ul>
+            </div>
+
+            <a href="{% url 'upload_contacts' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Upload More Contacts
+            </a>
+            <a href="{% url 'contacts_list' %}" class="btn btn-secondary">
+                <i class="fas fa-list"></i> View All Contacts
+            </a>
+            {% elif not success and message %}
+            <div class="alert alert-danger" role="alert">
+                <i class="fas fa-exclamation-circle"></i> <strong>Error!</strong><br>
+                {{ message }}
+            </div>
+
+            <a href="{% url 'upload_contacts' %}" class="btn btn-primary">
+                <i class="fas fa-redo"></i> Try Again
+            </a>
+            {% else %}
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <div class="form-group" style="margin-bottom: 25px;">
+                    <label for="excel_file"><strong>Select Excel File</strong></label>
+                    <div class="upload-area" id="dropArea">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <h5>Drag and drop your Excel file here</h5>
+                        <p>or click to browse</p>
+                        <input type="file" name="excel_file" id="excel_file" accept=".xlsx,.xls,.csv" required style="display: none;">
+                    </div>
+                    <small class="form-text text-muted" style="display: block; margin-top: 10px;">
+                        Supported formats: .xlsx, .xls, .csv (Maximum 5MB)
+                    </small>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 25px;">
+                    <label for="language"><strong>Default Language for Contacts</strong></label>
+                    <select name="language" id="language" class="form-select" required>
+                        <option value="en">English</option>
+                        <option value="te">Telugu</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 25px;">
+                    <label class="form-check-label" style="font-weight: normal;">
+                        <input type="checkbox" name="overwrite" id="overwrite" class="form-check-input">
+                        Overwrite existing contacts with same phone number
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-success btn-lg">
+                    <i class="fas fa-upload"></i> Upload Contacts
+                </button>
+                <a href="{% url 'contacts_list' %}" class="btn btn-secondary btn-lg">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <!-- Help Section -->
+        <div class="form-card" style="margin-bottom: 20px;">
+            <h5><i class="fas fa-question-circle"></i> How to Prepare Your Excel File</h5>
+            <ol style="font-size: 13px; color: #666;">
+                <li>Create an Excel file with two columns: <strong>Name</strong> and <strong>Phone</strong></li>
+                <li>Column names are case-insensitive (NAME, name, Name all work)</li>
+                <li>Phone numbers can be 10-15 digits long</li>
+                <li>Include country code (e.g., 91 for India)</li>
+                <li>Maximum 5MB file size</li>
+            </ol>
+
+            <h6 style="margin-top: 20px; font-weight: 600;">Example Format:</h6>
+            <table class="table" style="font-size: 12px; margin-bottom: 0;">
+                <thead style="background-color: #f8f9fa;">
+                    <tr>
+                        <th>Name</th>
+                        <th>Phone</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Rajesh Kumar</td>
+                        <td>9876543210</td>
+                    </tr>
+                    <tr>
+                        <td>Priya Singh</td>
+                        <td>9123456789</td>
+                    </tr>
+                    <tr>
+                        <td>Amit Patel</td>
+                        <td>919876543210</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Tips Section -->
+        <div style="background: #d1ecf1; border-left: 4px solid #3498db; padding: 15px; border-radius: 5px;">
+            <h6 style="color: #0c5460; margin-bottom: 10px;">
+                <i class="fas fa-lightbulb"></i> Tips
+            </h6>
+            <ul style="color: #0c5460; margin-bottom: 0; font-size: 13px;">
+                <li>Use consistent phone number format</li>
+                <li>Remove any special characters from phone</li>
+                <li>Check for duplicate entries before uploading</li>
+                <li>The system will skip invalid entries automatically</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    const dropArea = document.getElementById('dropArea');
+    const fileInput = document.getElementById('excel_file');
+
+    // Click to browse
+    dropArea.addEventListener('click', () => fileInput.click());
+
+    // Drag and drop
+    dropArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropArea.style.backgroundColor = 'rgba(39, 174, 96, 0.15)';
+    });
+
+    dropArea.addEventListener('dragleave', () => {
+        dropArea.style.backgroundColor = 'rgba(39, 174, 96, 0.05)';
+    });
+
+    dropArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropArea.style.backgroundColor = 'rgba(39, 174, 96, 0.05)';
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            dropArea.querySelector('h5').textContent = '✓ ' + files[0].name;
+        }
+    });
+
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+            dropArea.querySelector('h5').textContent = '✓ ' + fileInput.files[0].name;
+        }
+    });
+</script>
+{% endblock %}

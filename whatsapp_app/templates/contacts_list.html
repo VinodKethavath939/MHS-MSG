@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block title %}Contacts - School WhatsApp Notifications{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-users"></i> Contacts</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+            <li class="breadcrumb-item active">Contacts</li>
+        </ol>
+    </nav>
+</div>
+
+<!-- Action Buttons -->
+<div style="margin-bottom: 20px;">
+    <a href="{% url 'upload_contacts' %}" class="btn btn-success">
+        <i class="fas fa-upload"></i> Upload Contacts
+    </a>
+</div>
+
+<!-- Search and Filter -->
+<div class="form-card" style="margin-bottom: 20px;">
+    <form method="get" class="row g-3">
+        <div class="col-md-6">
+            <input type="text" name="search" class="form-control" placeholder="Search by name or phone" value="{{ request.GET.search }}">
+        </div>
+        <div class="col-md-4">
+            <select name="language" class="form-select">
+                <option value="">All Languages</option>
+                <option value="en" {% if request.GET.language == 'en' %}selected{% endif %}>English</option>
+                <option value="te" {% if request.GET.language == 'te' %}selected{% endif %}>Telugu</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="fas fa-search"></i> Search
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Contacts List -->
+<div class="table-card">
+    {% if contacts %}
+    <div style="padding: 15px; background-color: #f8f9fa; border-bottom: 1px solid #ddd;">
+        <p style="margin: 0; color: #666;">
+            <strong>Total:</strong> {{ total_count }} contacts
+        </p>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Language</th>
+                    <th>Status</th>
+                    <th>Added</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for contact in contacts %}
+                <tr>
+                    <td><strong>{{ contact.name }}</strong></td>
+                    <td>
+                        <span style="font-family: monospace;">{{ contact.phone }}</span>
+                    </td>
+                    <td>
+                        {% if contact.language == 'en' %}
+                            <span class="badge" style="background-color: #3498db;">English</span>
+                        {% else %}
+                            <span class="badge" style="background-color: #e74c3c;">Telugu</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if contact.is_blocked %}
+                            <span class="badge badge-danger"><i class="fas fa-ban"></i> Blocked</span>
+                        {% else %}
+                            <span class="badge badge-success"><i class="fas fa-check"></i> Active</span>
+                        {% endif %}
+                    </td>
+                    <td><small class="text-muted">{{ contact.created_at|date:'d M Y' }}</small></td>
+                    <td>
+                        <form method="post" action="{% url 'delete_contact' contact.id %}" style="display: inline;" onsubmit="return confirm('Delete this contact?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-danger">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if contacts.has_other_pages %}
+    <nav aria-label="Page navigation" style="padding: 20px; text-align: center;">
+        <ul class="pagination justify-content-center">
+            {% if contacts.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.language %}&language={{ request.GET.language }}{% endif %}">First</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ contacts.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.language %}&language={{ request.GET.language }}{% endif %}">Previous</a>
+                </li>
+            {% endif %}
+
+            {% for num in contacts.paginator.page_range %}
+                {% if contacts.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                {% elif num > contacts.number|add:'-3' and num < contacts.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.language %}&language={{ request.GET.language }}{% endif %}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if contacts.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ contacts.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.language %}&language={{ request.GET.language }}{% endif %}">Next</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ contacts.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.language %}&language={{ request.GET.language }}{% endif %}">Last</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+    {% else %}
+    <div style="padding: 40px; text-align: center;">
+        <i class="fas fa-inbox" style="font-size: 48px; color: #bdc3c7; margin-bottom: 20px; display: block;"></i>
+        <p style="color: #7f8c8d; margin-bottom: 20px;">No contacts found.</p>
+        <a href="{% url 'upload_contacts' %}" class="btn btn-success">
+            <i class="fas fa-upload"></i> Upload Contacts
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
