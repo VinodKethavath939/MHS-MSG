@@ -6,6 +6,7 @@ numpy==1.26.4
 openpyxl==3.0.10
 selenium==3.141.0
 python-dotenv==0.19.0
+dj-database-url==2.2.0
 requests==2.27.1
 psycopg2-binary==2.9.9
 celery==5.1.2
