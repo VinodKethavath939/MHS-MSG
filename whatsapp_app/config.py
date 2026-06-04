@@ -43,9 +43,11 @@ def setup_directories():
     """Create necessary directories"""
     dirs = [
         Config.BASE_DIR / 'whatsapp_app' / 'static' / 'uploads',
-        Config.BASE_DIR / 'whatsapp_app' / 'logs',
         Config.USER_DATA_DIR,
     ]
+
+    if not os.getenv('VERCEL'):
+        dirs.append(Config.BASE_DIR / 'whatsapp_app' / 'logs')
     
     for directory in dirs:
         directory.mkdir(parents=True, exist_ok=True)

@@ -114,6 +114,8 @@ WHATSAPP_MESSAGE_DELAY = 2  # seconds between messages
 CHROME_DRIVER_PATH = os.getenv('CHROME_DRIVER_PATH', 'chromedriver.exe')
 
 # Logging
+IS_VERCEL = bool(os.getenv('VERCEL'))
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -124,12 +126,6 @@ LOGGING = {
         },
     },
     'handlers': {
-        'file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'whatsapp_app', 'logs', 'whatsapp.log'),
-            'formatter': 'verbose',
-        },
         'console': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
@@ -137,12 +133,21 @@ LOGGING = {
         },
     },
     'root': {
-        'handlers': ['console', 'file'],
+        'handlers': ['console'],
         'level': 'INFO',
     },
 }
 
-# Create logs directory if it doesn't exist
-LOGS_DIR = os.path.join(BASE_DIR, 'whatsapp_app', 'logs')
-if not os.path.exists(LOGS_DIR):
-    os.makedirs(LOGS_DIR)
+if not IS_VERCEL:
+    LOGGING['handlers']['file'] = {
+        'level': 'INFO',
+        'class': 'logging.FileHandler',
+        'filename': os.path.join(BASE_DIR, 'whatsapp_app', 'logs', 'whatsapp.log'),
+        'formatter': 'verbose',
+    }
+    LOGGING['root']['handlers'].append('file')
+
+    # Create logs directory if it doesn't exist
+    LOGS_DIR = os.path.join(BASE_DIR, 'whatsapp_app', 'logs')
+    if not os.path.exists(LOGS_DIR):
+        os.makedirs(LOGS_DIR)
