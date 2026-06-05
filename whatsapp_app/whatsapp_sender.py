@@ -55,9 +55,9 @@ class WhatsAppSender:
             self.demo_mode = demo_mode
         
         if self.demo_mode:
-            logger.info("🎭 Running in DEMO MODE (ChromeDriver not found)")
+            logger.info("DEMO MODE: ChromeDriver not found")
         else:
-            logger.info("✓ Running in PRODUCTION MODE (ChromeDriver detected)")
+            logger.info("PRODUCTION MODE: ChromeDriver detected")
         
     def _check_chromedriver_available(self):
         """Check if ChromeDriver is available"""
@@ -111,7 +111,7 @@ class WhatsAppSender:
                 self.driver = webdriver.Chrome(executable_path=self.chrome_driver_path, options=options)
             self.wait = WebDriverWait(self.driver, 30)
             
-            logger.info("✓ WebDriver setup successful")
+            logger.info("WebDriver setup successful")
             self.is_ready = True
             return True
             
@@ -124,9 +124,9 @@ class WhatsAppSender:
     def _setup_demo(self):
         """Setup demo mode"""
         try:
-            logger.info("🎭 Initializing WhatsApp sender (demo mode)...")
+            logger.info("DEMO MODE: Initializing WhatsApp sender...")
             time.sleep(0.5)
-            logger.info("✓ WhatsApp sender ready (demo mode)")
+            logger.info("DEMO MODE: WhatsApp sender ready")
             self.is_ready = True
             return True
         except Exception as e:
@@ -150,7 +150,7 @@ class WhatsAppSender:
                 self.wait.until(EC.presence_of_element_located(
                     (By.XPATH, "//div[@data-testid='chat-list'] | //div[@id='pane-side'] | //div[@contenteditable='true'][@data-tab='3'] | //div[@role='textbox']")
                 ))
-                logger.info("✓ Already logged in to WhatsApp")
+                logger.info("Already logged in to WhatsApp")
                 self.is_ready = True
                 return True
             except TimeoutException:
@@ -166,7 +166,7 @@ class WhatsAppSender:
                     self.wait.until(EC.presence_of_element_located(
                         (By.XPATH, "//div[@data-testid='chat-list'] | //div[@id='pane-side'] | //div[@contenteditable='true'][@data-tab='3'] | //div[@role='textbox']")
                     ))
-                    logger.info("✓ QR code scanned successfully")
+                    logger.info("QR code scanned successfully")
                     self.is_ready = True
                     return True
                 except TimeoutException:
@@ -180,9 +180,9 @@ class WhatsAppSender:
     def _open_whatsapp_web_demo(self):
         """Demo mode WhatsApp Web opening"""
         try:
-            logger.info("🎭 DEMO: Opening WhatsApp Web...")
+            logger.info("DEMO MODE: Opening WhatsApp Web...")
             time.sleep(1)
-            logger.info("✓ WhatsApp Web loaded (demo mode)")
+            logger.info("DEMO MODE: WhatsApp Web loaded")
             self.is_ready = True
             return True
         except Exception as e:
@@ -209,7 +209,7 @@ class WhatsAppSender:
                 self.wait.until(EC.presence_of_element_located(
                     (By.XPATH, "//footer//div[@contenteditable='true'][@data-tab='10' or @data-tab='6'] | //footer//div[@role='textbox']")
                 ))
-                logger.info(f"✓ Chat opened for {digits_only}")
+                logger.info(f"Chat opened for {digits_only}")
                 return True
             except TimeoutException:
                 logger.warning(f"Chat not ready for {digits_only}")
@@ -223,9 +223,9 @@ class WhatsAppSender:
         """Demo contact search"""
         try:
             phone = str(phone_number).replace('+', '').replace(' ', '').replace('-', '')
-            logger.info(f"🎭 DEMO: Searching for contact {phone}...")
+            logger.info(f"DEMO MODE: Searching for contact {phone}...")
             time.sleep(0.3)
-            logger.info(f"✓ Contact {phone} found (demo mode)")
+            logger.info(f"DEMO MODE: Contact {phone} found")
             return True
         except Exception as e:
             logger.error(f"Error: {str(e)}")
@@ -246,8 +246,9 @@ class WhatsAppSender:
             try:
                 logger.info(f"Sending message (attempt {attempt + 1}/{retry_count})")
                 
+                message_box_xpath = "//footer//div[@contenteditable='true'][@data-tab='10' or @data-tab='6'] | //footer//div[@role='textbox']"
                 message_box = self.wait.until(EC.presence_of_element_located(
-                    (By.XPATH, "//footer//div[@contenteditable='true'][@data-tab='10' or @data-tab='6'] | //footer//div[@role='textbox']")
+                    (By.XPATH, message_box_xpath)
                 ))
                 
                 message_box.click()
@@ -256,14 +257,21 @@ class WhatsAppSender:
                 
                 try:
                     send_button = self.wait.until(EC.element_to_be_clickable(
-                        (By.XPATH, "//button[@aria-label='Send'] | //span[@data-icon='send']")
+                        (By.XPATH, "//button[@aria-label='Send'] | //span[@data-icon='send']/ancestor::button")
                     ))
                     send_button.click()
                 except TimeoutException:
                     # Fallback: press Enter to send
                     message_box.send_keys(Keys.ENTER)
-                
-                logger.info("✓ Message sent successfully")
+
+                try:
+                    WebDriverWait(self.driver, 10).until(
+                        lambda d: d.find_element(By.XPATH, message_box_xpath).text.strip() == ""
+                    )
+                except (TimeoutException, StaleElementReferenceException):
+                    logger.warning("Message box not cleared after send attempt")
+
+                logger.info("Message sent successfully")
                 time.sleep(1)
                 self.successful_sends += 1
                 self.message_count += 1
@@ -287,16 +295,16 @@ class WhatsAppSender:
         """Demo message sending"""
         try:
             if random.random() > 0.95:
-                logger.warning("🎭 DEMO: Send failed (simulated failure)")
+                logger.warning("DEMO MODE: Send failed (simulated failure)")
                 self.failed_sends += 1
                 return False
             
-            logger.info("🎭 DEMO: Sending message...")
+            logger.info("DEMO MODE: Sending message...")
             time.sleep(0.2)
             
             self.message_count += 1
             self.successful_sends += 1
-            logger.info(f"✓ Message sent (demo mode) - Total: {self.message_count}")
+            logger.info(f"DEMO MODE: Message sent - Total: {self.message_count}")
             return True
             
         except Exception as e:
@@ -317,7 +325,7 @@ class WhatsAppSender:
                 logger.warning(f"Could not close chat: {str(e)}")
         else:
             try:
-                logger.info("🎭 DEMO: Closing chat...")
+                logger.info("DEMO MODE: Closing chat...")
                 time.sleep(0.2)
             except Exception as e:
                 logger.warning(f"Could not close chat: {str(e)}")
@@ -350,7 +358,7 @@ class WhatsAppSender:
                     continue
                 
                 results['sent'].append(contact)
-                logger.info(f"✓ Message sent to {name}")
+                logger.info(f"Message sent to {name}")
                 
                 if progress_callback:
                     progress_callback(index + 1, len(contacts), 'sent')
@@ -363,7 +371,7 @@ class WhatsAppSender:
                 if progress_callback:
                     progress_callback(index + 1, len(contacts), 'error')
         
-        logger.info(f"✓ Bulk send complete: {len(results['sent'])} sent, {len(results['failed'])} failed")
+        logger.info(f"Bulk send complete: {len(results['sent'])} sent, {len(results['failed'])} failed")
         return results
 
     def close(self):
@@ -373,7 +381,7 @@ class WhatsAppSender:
                 logger.info("Closing Chrome WebDriver...")
                 self.driver.quit()
             else:
-                logger.info("🎭 DEMO: Closing WhatsApp sender...")
+                logger.info("DEMO MODE: Closing WhatsApp sender...")
             
             logger.info(f"Stats - Sent: {self.successful_sends}, Failed: {self.failed_sends}")
         except Exception as e:
