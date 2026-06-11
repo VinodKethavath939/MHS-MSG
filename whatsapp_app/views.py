@@ -5,6 +5,7 @@ Views for the WhatsApp notification system
 import logging
 import json
 import csv
+import threading
 from datetime import datetime
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
@@ -25,6 +26,7 @@ from .forms import (
     ContactSearchForm, ExcelHelper, DirectMessageForm
 )
 from .whatsapp_sender import WhatsAppSender
+from .utils import send_bulk_messages_async
 
 logger = logging.getLogger(__name__)
 
@@ -466,6 +468,13 @@ def send_message(request, message_id):
         f'Started sending message: {message.title} to {message.total_contacts} contacts',
         request
     )
+
+    thread = threading.Thread(
+        target=send_bulk_messages_async,
+        args=(message.id, target_language),
+        daemon=True
+    )
+    thread.start()
     
     return JsonResponse({
         'success': True,

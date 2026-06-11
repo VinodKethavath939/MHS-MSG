@@ -4,14 +4,37 @@ Automatically uses real Selenium if ChromeDriver is available
 Falls back to demo mode if Chrome/ChromeDriver not found
 """
 
-import os
 import time
 import logging
 import random
-from datetime import datetime
 from pathlib import Path
 
+class AsciiLogFilter(logging.Filter):
+    def filter(self, record):
+        if isinstance(record.msg, str):
+            record.msg = record.msg.encode('ascii', 'ignore').decode('ascii')
+        return True
+
+
 logger = logging.getLogger(__name__)
+logger.addFilter(AsciiLogFilter())
+
+LOGGED_IN_XPATH = (
+    "//div[@id='pane-side']"
+    " | //div[@data-testid='chat-list']"
+    " | //div[@aria-label='Chat list']"
+    " | //div[@role='grid']"
+    " | //div[@contenteditable='true'][@data-tab='3']"
+)
+MESSAGE_BOX_XPATH = (
+    "//footer//div[@contenteditable='true']"
+    " | //footer//div[@role='textbox']"
+)
+SEND_BUTTON_XPATH = (
+    "//button[@aria-label='Send']"
+    " | //button[.//span[@data-icon='send']]"
+    " | //span[@data-icon='send']/ancestor::button"
+)
 
 # Try to import Selenium - if not available or Chrome missing, use demo mode
 try:
@@ -21,7 +44,7 @@ try:
     from selenium.webdriver.support.ui import WebDriverWait
     from selenium.webdriver.support import expected_conditions as EC
     from selenium.webdriver.chrome.service import Service
-    from selenium.common.exceptions import TimeoutException, NoSuchElementException, StaleElementReferenceException
+    from selenium.common.exceptions import TimeoutException, NoSuchElementException
     SELENIUM_AVAILABLE = True
 except ImportError:
     SELENIUM_AVAILABLE = False
@@ -145,6 +168,25 @@ class WhatsAppSender:
         try:
             logger.info("Opening WhatsApp Web...")
             self.driver.get('https://web.whatsapp.com')
+
+            try:
+                self.wait.until(EC.presence_of_element_located((By.XPATH, LOGGED_IN_XPATH)))
+                logger.info("Already logged in to WhatsApp")
+                self.is_ready = True
+                return True
+            except TimeoutException:
+                logger.info("QR code displayed. Please scan with your phone.")
+
+            try:
+                WebDriverWait(self.driver, 300).until(
+                    EC.presence_of_element_located((By.XPATH, LOGGED_IN_XPATH))
+                )
+                logger.info("QR code scanned successfully")
+                self.is_ready = True
+                return True
+            except TimeoutException:
+                logger.error("QR code scan timeout (waited 5 minutes)")
+                return False
             
             try:
                 self.wait.until(EC.presence_of_element_located(
@@ -206,9 +248,7 @@ class WhatsAppSender:
             self.driver.get(f"https://web.whatsapp.com/send?phone={digits_only}&text=&app_absent=0")
 
             try:
-                self.wait.until(EC.presence_of_element_located(
-                    (By.XPATH, "//footer//div[@contenteditable='true'][@data-tab='10' or @data-tab='6'] | //footer//div[@role='textbox']")
-                ))
+                self.wait.until(EC.presence_of_element_located((By.XPATH, MESSAGE_BOX_XPATH)))
                 logger.info(f"✓ Chat opened for {digits_only}")
                 return True
             except TimeoutException:
@@ -246,9 +286,7 @@ class WhatsAppSender:
             try:
                 logger.info(f"Sending message (attempt {attempt + 1}/{retry_count})")
                 
-                message_box = self.wait.until(EC.presence_of_element_located(
-                    (By.XPATH, "//footer//div[@contenteditable='true'][@data-tab='10' or @data-tab='6'] | //footer//div[@role='textbox']")
-                ))
+                message_box = self.wait.until(EC.presence_of_element_located((By.XPATH, MESSAGE_BOX_XPATH)))
                 
                 message_box.click()
                 message_box.send_keys(message)
@@ -256,7 +294,7 @@ class WhatsAppSender:
                 
                 try:
                     send_button = self.wait.until(EC.element_to_be_clickable(
-                        (By.XPATH, "//button[@aria-label='Send'] | //span[@data-icon='send']")
+                        (By.XPATH, SEND_BUTTON_XPATH)
                     ))
                     send_button.click()
                 except TimeoutException:
